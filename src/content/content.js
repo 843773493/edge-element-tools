@@ -152,12 +152,26 @@
     restoreCursor();
   }
 
-  function startPicker(mode) {
+  function getStoredSelectionBuffer() {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "GET_SELECTION_BUFFER" }, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve([]);
+          return;
+        }
+        resolve(Array.isArray(response?.selection) ? response.selection : []);
+      });
+    });
+  }
+
+  async function startPicker(mode) {
     stopPicker();
     state.active = true;
     state.mode = mode === "append" ? "append" : "replace";
     if (state.mode === "replace") {
       state.selectedElements = [];
+    } else if (state.selectedElements.length === 0) {
+      state.selectedElements = await getStoredSelectionBuffer();
     }
     document.documentElement?.classList.add(PICKING_CLASS);
     document.addEventListener("pointermove", handlePointerMove, true);
@@ -205,6 +219,7 @@
     chrome.runtime.sendMessage({
       type: "ELEMENT_SELECTED",
       mode: state.mode,
+      element: snapshot,
       selection: copiedValue,
       copied,
       page: {
@@ -241,8 +256,9 @@
     if (message?.type !== "START_PICK") {
       return false;
     }
-    startPicker(message.mode);
-    sendResponse({ ok: true });
-    return false;
+    startPicker(message.mode)
+      .then(() => sendResponse({ ok: true }))
+      .catch((error) => sendResponse({ ok: false, error: error.message }));
+    return true;
   });
 })();

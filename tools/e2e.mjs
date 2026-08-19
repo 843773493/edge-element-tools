@@ -36,7 +36,7 @@ let context;
 
 try {
   context = await chromium.launchPersistentContext(userDataDir, {
-    channel: "chromium",
+    channel: process.env.EDGE_E2E_CHANNEL ?? "chromium",
     headless: process.env.EDGE_E2E_HEADFUL !== "1",
     args: [
       `--disable-extensions-except=${root}`,
@@ -71,21 +71,28 @@ try {
   await appendPopup.close().catch(() => {});
   await page.locator("#fixture-heading").hover();
   await page.locator("#fixture-heading").click();
-  const accumulatedClipboard = JSON.parse(await readClipboard(page, "fixture-heading"));
-  assert.equal(accumulatedClipboard.length, 2);
+  const secondAppendPopup = await openPopup(context, extensionId, fixtureUrl);
+  await secondAppendPopup.locator("#pick-append").click();
+  await secondAppendPopup.close().catch(() => {});
+  await page.locator("#fixture-status").hover();
+  await page.locator("#fixture-status").click();
+  const accumulatedClipboard = JSON.parse(await readClipboard(page, "fixture-status"));
+  assert.equal(accumulatedClipboard.length, 3);
   assert.equal(accumulatedClipboard[0].selector, "#fixture-button");
   assert.equal(accumulatedClipboard[1].selector, "#fixture-heading");
+  assert.equal(accumulatedClipboard[2].selector, "#fixture-status");
 
   const copyPopup = await openPopup(context, extensionId, fixtureUrl);
   await copyPopup.locator("#copy-log").click();
   await copyPopup.close().catch(() => {});
   const logs = JSON.parse(await readClipboard(page, "element_selected"));
-  assert.equal(logs.length, 2);
+  assert.equal(logs.length, 3);
   assert.equal(logs[0].type, "element_selected");
   assert.equal(logs[1].mode, "append");
+  assert.equal(logs[2].selection.length, 3);
 
   const countPopup = await openPopup(context, extensionId, fixtureUrl);
-  assert.equal(await countPopup.locator("#log-count").textContent(), "2 条");
+  assert.equal(await countPopup.locator("#log-count").textContent(), "3 条");
   await countPopup.close();
 
   console.log("✓ Edge 扩展隔离 E2E 通过：Popup、选择元素、选择元素+、剪贴板和复制日志均已验证");
