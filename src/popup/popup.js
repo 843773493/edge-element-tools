@@ -12,11 +12,12 @@ function setMessage(message, kind = "") {
   elements.message.classList.toggle("is-error", kind === "error");
 }
 
-function setBusy(isBusy, status = "就绪") {
+function setBusy(isBusy, status = "就绪", unavailable = false) {
   for (const button of [elements.pick, elements.pickAppend, elements.copyLog]) {
     button.disabled = isBusy;
   }
   elements.status.textContent = status;
+  elements.status.classList.toggle("is-unavailable", unavailable);
 }
 
 function queryActiveTab() {
@@ -60,6 +61,28 @@ function sendToRuntime(message) {
   });
 }
 
+function getPageRestrictionMessage(url) {
+  if (!url) {
+    return "无法读取当前页面地址，请打开普通网页后重试。";
+  }
+  try {
+    const protocol = new URL(url).protocol;
+    if (protocol !== "http:" && protocol !== "https:") {
+      return "Edge 内置页面不能注入选择器，请打开普通网页后再试。";
+    }
+  } catch {
+    return "当前页面不支持元素选择，请打开普通网页后再试。";
+  }
+  return "";
+}
+
+function getConnectionErrorMessage(error) {
+  if (/Receiving end does not exist|Could not establish connection/i.test(error.message)) {
+    return "当前网页还没有加载插件脚本，请刷新网页后再试。";
+  }
+  return `无法开始选择：${error.message}`;
+}
+
 async function startPicker(mode) {
   setBusy(true, "选择中");
   setMessage("请在当前网页中点击目标元素。按 Esc 可取消。 ");
@@ -70,6 +93,13 @@ async function startPicker(mode) {
       throw new Error("找不到当前网页");
     }
 
+    const restrictionMessage = getPageRestrictionMessage(tab.url);
+    if (restrictionMessage) {
+      setBusy(false, "仅支持网页", true);
+      setMessage(restrictionMessage, "error");
+      return;
+    }
+
     const response = await sendToTab(tab.id, { type: "START_PICK", mode });
     if (!response?.ok) {
       throw new Error(response?.error || "元素选择器没有响应");
@@ -77,8 +107,8 @@ async function startPicker(mode) {
 
     window.close();
   } catch (error) {
-    setBusy(false, "不可用");
-    setMessage(`无法开始选择：${error.message}`, "error");
+    setBusy(false, "不可用", true);
+    setMessage(getConnectionErrorMessage(error), "error");
   }
 }
 
@@ -116,7 +146,7 @@ async function copyLog() {
     setBusy(false, "已复制");
     setMessage(logs.length ? `已复制 ${logs.length} 条日志。` : "当前还没有日志。 ");
   } catch (error) {
-    setBusy(false, "不可用");
+    setBusy(false, "不可用", true);
     setMessage(`复制日志失败：${error.message}`, "error");
   }
 }
