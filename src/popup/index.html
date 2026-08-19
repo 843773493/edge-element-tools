@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>元素选择与日志</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="panel">
+      <header class="header">
+        <div>
+          <p class="eyebrow">EDGE ELEMENT TOOLS</p>
+          <h1>元素选择器</h1>
+        </div>
+        <span id="status" class="status" role="status">就绪</span>
+      </header>
+
+      <p class="intro">点击操作后回到当前网页，按提示选择目标元素。</p>
+
+      <section class="actions" aria-label="元素操作">
+        <button id="pick" class="action" type="button">
+          <span class="action-icon" aria-hidden="true">↖</span>
+          <span class="action-copy">
+            <strong>选择元素</strong>
+            <small>选择一个元素并立即复制信息</small>
+          </span>
+          <span class="action-arrow" aria-hidden="true">›</span>
+        </button>
+
+        <button id="pick-append" class="action" type="button">
+          <span class="action-icon" aria-hidden="true">＋</span>
+          <span class="action-copy">
+            <strong>选择元素+</strong>
+            <small>继续选择并复制累计结果</small>
+          </span>
+          <span class="action-arrow" aria-hidden="true">›</span>
+        </button>
+
+        <button id="copy-log" class="action" type="button">
+          <span class="action-icon" aria-hidden="true">▤</span>
+          <span class="action-copy">
+            <strong>复制日志</strong>
+            <small>复制本次会话的元素选择记录</small>
+          </span>
+          <span class="action-arrow" aria-hidden="true">›</span>
+        </button>
+      </section>
+
+      <div class="log-summary">
+        <span>日志记录</span>
+        <output id="log-count">0 条</output>
+      </div>
+      <p id="message" class="message" role="status">选择完成后，元素信息会自动复制。</p>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

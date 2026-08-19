@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+.ai-backups/
+.edge-dev-profile/
+*.crx
+*.zip

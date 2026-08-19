@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Edge 元素工具 · 选择与日志",
+  "description": "在网页中选择元素、复制元素信息，并复制选择日志。",
+  "version": "0.1.0",
+  "minimum_chrome_version": "111",
+  "permissions": [
+    "storage",
+    "clipboardWrite",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "元素选择与日志",
+    "default_popup": "src/popup/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "src/content/content.js"
+      ],
+      "css": [
+        "src/content/content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

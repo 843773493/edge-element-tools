@@ -1,0 +1,11 @@
+{
+  "description": "示例：把弹窗标题改成更明确的文案",
+  "operations": [
+    {
+      "type": "replace",
+      "file": "src/popup/index.html",
+      "search": "<h1>页面护眼色</h1>",
+      "replace": "<h1>页面护眼色 · 示例</h1>"
+    }
+  ]
+}

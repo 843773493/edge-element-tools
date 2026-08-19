@@ -1,0 +1,154 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  background: #f4f7fb;
+  color: #172033;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 360px;
+}
+
+.panel {
+  min-height: 430px;
+  padding: 22px;
+}
+
+.header,
+.switch-row,
+.field span {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.header {
+  margin-bottom: 10px;
+}
+
+.eyebrow {
+  color: #5470a1;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  margin: 0 0 5px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.status {
+  background: #d8f5e1;
+  border-radius: 999px;
+  color: #1d7542;
+  font-size: 12px;
+  padding: 5px 9px;
+}
+
+.intro {
+  color: #63708a;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.actions {
+  display: grid;
+  gap: 10px;
+}
+
+.action {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e3e8f0;
+  border-radius: 10px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 66px;
+  padding: 11px 12px;
+  text-align: left;
+  transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+}
+
+.action:hover {
+  border-color: #aac4f4;
+  box-shadow: 0 5px 16px rgba(47, 111, 237, 0.12);
+  transform: translateY(-1px);
+}
+
+.action:focus-visible {
+  outline: 3px solid rgba(47, 111, 237, 0.3);
+  outline-offset: 2px;
+}
+
+.action:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.action-icon {
+  align-items: center;
+  background: #eaf1ff;
+  border-radius: 9px;
+  color: #2f6fed;
+  display: inline-flex;
+  flex: 0 0 34px;
+  font-size: 20px;
+  height: 34px;
+  justify-content: center;
+}
+
+.action-copy {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.action-copy strong {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.action-copy small {
+  color: #63708a;
+  font-size: 11px;
+}
+
+.action-arrow {
+  color: #6c8fcf;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.log-summary {
+  align-items: center;
+  color: #63708a;
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+  margin: 17px 2px 0;
+}
+
+.log-summary output {
+  color: #2f6fed;
+  font-variant-numeric: tabular-nums;
+}
+
+.message {
+  color: #63708a;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 8px 2px 0;
+}
+
+.message.is-error {
+  color: #b13c3c;
+}

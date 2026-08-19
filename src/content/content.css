@@ -1,0 +1,4 @@
+html.edge-element-tools-picking,
+html.edge-element-tools-picking * {
+  cursor: crosshair !important;
+}
