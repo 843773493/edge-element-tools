@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Element Tools Performance Fixture</title>
+    <style>
+      .perf-target {
+        display: inline-block;
+        width: 180px;
+        padding: 12px 18px;
+        color: #123456;
+        background: #eef4ff;
+      }
+      .perf-ancestor .perf-target::before {
+        content: "";
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const styleSheetCount = 20;
+      const rulesPerStyleSheet = 300;
+      const ancestorDepth = 14;
+
+      for (let sheetIndex = 0; sheetIndex < styleSheetCount; sheetIndex += 1) {
+        const style = document.createElement("style");
+        const rules = [];
+        for (let ruleIndex = 0; ruleIndex < rulesPerStyleSheet; ruleIndex += 1) {
+          if (ruleIndex % 75 === 0) {
+            rules.push(`.perf-target, .perf-ancestor-${sheetIndex} .perf-target { color: rgb(${sheetIndex}, ${ruleIndex % 255}, 80); }`);
+          } else {
+            rules.push(`.perf-noise-${sheetIndex}-${ruleIndex} { margin-left: ${ruleIndex % 11}px; }`);
+          }
+        }
+        style.textContent = rules.join("\n");
+        document.head.appendChild(style);
+      }
+
+      let container = document.body;
+      for (let level = 0; level < ancestorDepth; level += 1) {
+        const wrapper = document.createElement("div");
+        wrapper.className = `perf-ancestor perf-ancestor-${level}`;
+        container.appendChild(wrapper);
+        container = wrapper;
+      }
+      container.innerHTML = '<button id="perf-target" class="perf-target" type="button">Performance target</button>';
+      document.documentElement.dataset.performanceFixtureReady = "1";
+    </script>
+  </body>
+</html>

@@ -54,48 +54,67 @@ try {
 
   const page = await context.newPage();
   await page.goto(fixtureUrl);
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    console.log("fixture console log");
+    console.warn("fixture console warning");
+    console.error("fixture console error");
+  });
 
   const popup = await openPopup(context, extensionId, fixtureUrl);
   await assertPopupState(popup, "就绪");
+  await popup.waitForFunction(() => document.querySelector("#log-count")?.textContent === "3 条");
   await popup.locator("#pick").click();
   await popup.close().catch(() => {});
 
   await page.locator("#fixture-button").hover();
   await page.locator("#fixture-button").click();
-  const firstClipboard = JSON.parse(await readClipboard(page, "fixture-button"));
-  assert.equal(firstClipboard.tagName, "button");
-  assert.equal(firstClipboard.selector, "#fixture-button");
+  const firstClipboard = await readClipboard(page, "Sample page action");
+  assert.equal(firstClipboard, '<button id="fixture-button" type="button">Sample page action</button>');
+  assert.doesNotMatch(firstClipboard, /Attached Element Context|data-boxteam-ref|```/);
+  assert.equal(await page.locator(".edge-element-tools-copy-toast").textContent(), "已复制元素 HTML");
 
-  const appendPopup = await openPopup(context, extensionId, fixtureUrl);
-  await appendPopup.locator("#pick-append").click();
-  await appendPopup.close().catch(() => {});
   await page.locator("#fixture-heading").hover();
   await page.locator("#fixture-heading").click();
-  const secondAppendPopup = await openPopup(context, extensionId, fixtureUrl);
-  await secondAppendPopup.locator("#pick-append").click();
-  await secondAppendPopup.close().catch(() => {});
-  await page.locator("#fixture-status").hover();
-  await page.locator("#fixture-status").click();
-  const accumulatedClipboard = JSON.parse(await readClipboard(page, "fixture-status"));
-  assert.equal(accumulatedClipboard.length, 3);
-  assert.equal(accumulatedClipboard[0].selector, "#fixture-button");
-  assert.equal(accumulatedClipboard[1].selector, "#fixture-heading");
-  assert.equal(accumulatedClipboard[2].selector, "#fixture-status");
+  const secondBasicClipboard = await readClipboard(page, "Extension interaction fixture");
+  assert.equal(secondBasicClipboard, '<h1 id="fixture-heading">Extension interaction fixture</h1>');
+
+  const richPopup = await openPopup(context, extensionId, fixtureUrl);
+  await richPopup.locator("#pick-rich").click();
+  await richPopup.close().catch(() => {});
+  await page.locator("#fixture-button").hover();
+  await page.locator("#fixture-button").click();
+  const richClipboard = await readClipboard(page, "Attached Element Context from Integrated Browser");
+  assert.equal(await page.locator(".edge-element-tools-copy-toast").textContent(), "已复制完整元素上下文");
+  assert.match(richClipboard, /Element: button#fixture-button/);
+  assert.match(richClipboard, /HTML Path: html > body > main > button#fixture-button/);
+  assert.match(richClipboard, /<button id="fixture-button"[^>]*>Sample page action<\/button>/);
+  assert.match(richClipboard, /Outer HTML:\r?\n```html/);
+  assert.match(richClipboard, /CSS:\r?\n```css/);
+  assert.match(richClipboard, /Dimensions:\r?\n- top: \d+px\r?\n- left: \d+px\r?\n- width: \d+px\r?\n- height: \d+px/);
+  assert.doesNotMatch(richClipboard, /data-boxteam-ref/);
+
+  await page.locator("#fixture-heading").hover();
+  await page.locator("#fixture-heading").click();
+  const secondRichClipboard = await readClipboard(page, "Element: h1#fixture-heading");
+  assert.match(secondRichClipboard, /HTML Path: html > body > main > h1#fixture-heading/);
+  assert.match(secondRichClipboard, /<h1 id="fixture-heading">Extension interaction fixture<\/h1>/);
 
   const copyPopup = await openPopup(context, extensionId, fixtureUrl);
+  await copyPopup.waitForFunction(() => document.querySelector("#log-count")?.textContent === "3 条");
   await copyPopup.locator("#copy-log").click();
+  const logs = await readClipboard(page, "fixture console log");
   await copyPopup.close().catch(() => {});
-  const logs = JSON.parse(await readClipboard(page, "element_selected"));
-  assert.equal(logs.length, 3);
-  assert.equal(logs[0].type, "element_selected");
-  assert.equal(logs[1].mode, "append");
-  assert.equal(logs[2].selection.length, 3);
+  assert.match(logs, /log: fixture console log/);
+  assert.match(logs, /warning: fixture console warning/);
+  assert.match(logs, /error: fixture console error/);
+  assert.doesNotMatch(logs, /element_selected|选择元素/);
 
   const countPopup = await openPopup(context, extensionId, fixtureUrl);
   assert.equal(await countPopup.locator("#log-count").textContent(), "3 条");
   await countPopup.close();
 
-  console.log("✓ Edge 扩展隔离 E2E 通过：Popup、选择元素、选择元素+、剪贴板和复制日志均已验证");
+  console.log("✓ Edge 扩展隔离 E2E 通过：Outer HTML、完整上下文、剪贴板和网页控制台日志均已验证");
 } finally {
   await context?.close();
   await new Promise((resolve) => server.close(resolve));

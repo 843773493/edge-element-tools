@@ -1,6 +1,6 @@
 const elements = {
   pick: document.querySelector("#pick"),
-  pickAppend: document.querySelector("#pick-append"),
+  pickRich: document.querySelector("#pick-rich"),
   copyLog: document.querySelector("#copy-log"),
   logCount: document.querySelector("#log-count"),
   message: document.querySelector("#message"),
@@ -13,7 +13,7 @@ function setMessage(message, kind = "") {
 }
 
 function setBusy(isBusy, status = "就绪", unavailable = false) {
-  for (const button of [elements.pick, elements.pickAppend, elements.copyLog]) {
+  for (const button of [elements.pick, elements.pickRich, elements.copyLog]) {
     button.disabled = isBusy;
   }
   elements.status.textContent = status;
@@ -140,20 +140,41 @@ async function copyLog() {
   setBusy(true, "处理中");
 
   try {
-    const response = await sendToRuntime({ type: "GET_LOGS" });
+    const tab = await queryActiveTab();
+    if (!tab?.id) {
+      throw new Error("找不到当前网页");
+    }
+    const response = await sendToRuntime({ type: "GET_CONSOLE_LOGS", tabId: tab.id });
     const logs = Array.isArray(response?.logs) ? response.logs : [];
-    await writeClipboard(JSON.stringify(logs, null, 2));
+    await writeClipboard(formatConsoleLogs(logs));
     setBusy(false, "已复制");
-    setMessage(logs.length ? `已复制 ${logs.length} 条日志。` : "当前还没有日志。 ");
+    setMessage(logs.length ? `已复制 ${logs.length} 条控制台消息。` : "当前还没有控制台消息。 ");
   } catch (error) {
     setBusy(false, "不可用", true);
     setMessage(`复制日志失败：${error.message}`, "error");
   }
 }
 
+function formatConsoleLogs(logs) {
+  return logs.map((log) => {
+    const timestamp = log.occurred_at || "未知时间";
+    const level = log.level || "log";
+    const text = log.text || "";
+    const location = log.location?.url
+      ? `\n  at ${log.location.url}:${log.location.lineNumber ?? 0}:${log.location.columnNumber ?? 0}`
+      : "";
+    return `[${timestamp}] ${level}: ${text}${location}`;
+  }).join("\n");
+}
+
 async function refreshLogCount() {
   try {
-    const response = await sendToRuntime({ type: "GET_LOGS" });
+    const tab = await queryActiveTab();
+    if (!tab?.id) {
+      elements.logCount.textContent = "—";
+      return;
+    }
+    const response = await sendToRuntime({ type: "GET_CONSOLE_LOGS", tabId: tab.id });
     const count = Array.isArray(response?.logs) ? response.logs.length : 0;
     elements.logCount.textContent = `${count} 条`;
   } catch {
@@ -161,14 +182,13 @@ async function refreshLogCount() {
   }
 }
 
-elements.pick.addEventListener("click", () => startPicker("replace"));
-elements.pickAppend.addEventListener("click", () => startPicker("append"));
+elements.pick.addEventListener("click", () => startPicker("basic"));
+elements.pickRich.addEventListener("click", () => startPicker("rich"));
 elements.copyLog.addEventListener("click", copyLog);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === "local" && changes.selectionLogs) {
-    const nextLogs = Array.isArray(changes.selectionLogs.newValue) ? changes.selectionLogs.newValue : [];
-    elements.logCount.textContent = `${nextLogs.length} 条`;
+  if ((areaName === "session" || areaName === "local") && changes.consoleLogsByTab) {
+    void refreshLogCount();
   }
 });
 

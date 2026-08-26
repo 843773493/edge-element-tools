@@ -3,15 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>元素选择与日志</title>
+    <title>Web 开发者工具</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main class="panel">
       <header class="header">
         <div>
-          <p class="eyebrow">EDGE ELEMENT TOOLS</p>
-          <h1>元素选择器</h1>
+          <p class="eyebrow">WEB DEVELOPER TOOLS</p>
+          <h1>Web 开发者工具</h1>
         </div>
         <span id="status" class="status" role="status">就绪</span>
       </header>
@@ -23,16 +23,16 @@
           <span class="action-icon" aria-hidden="true">↖</span>
           <span class="action-copy">
             <strong>选择元素</strong>
-            <small>选择一个元素并立即复制信息</small>
+            <small>选择一个元素并复制 Outer HTML</small>
           </span>
           <span class="action-arrow" aria-hidden="true">›</span>
         </button>
 
-        <button id="pick-append" class="action" type="button">
+        <button id="pick-rich" class="action" type="button">
           <span class="action-icon" aria-hidden="true">＋</span>
           <span class="action-copy">
             <strong>选择元素+</strong>
-            <small>继续选择并复制累计结果</small>
+            <small>选择一个元素并复制完整上下文</small>
           </span>
           <span class="action-arrow" aria-hidden="true">›</span>
         </button>
@@ -40,18 +40,18 @@
         <button id="copy-log" class="action" type="button">
           <span class="action-icon" aria-hidden="true">▤</span>
           <span class="action-copy">
-            <strong>复制日志</strong>
-            <small>复制本次会话的元素选择记录</small>
+            <strong>复制控制台日志</strong>
+            <small>复制当前网页的 Console 输出</small>
           </span>
           <span class="action-arrow" aria-hidden="true">›</span>
         </button>
       </section>
 
       <div class="log-summary">
-        <span>日志记录</span>
+        <span>控制台消息</span>
         <output id="log-count">0 条</output>
       </div>
-      <p id="message" class="message" role="status">选择完成后，元素信息会自动复制。</p>
+      <p id="message" class="message" role="status">选择完成后，元素 HTML 会自动复制。</p>
     </main>
     <script type="module" src="popup.js"></script>
   </body>

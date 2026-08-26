@@ -33,6 +33,8 @@ if (!manifest.permissions?.includes("storage")) fail("示例需要 storage 权�
 const files = [
   manifest.background?.service_worker,
   manifest.action?.default_popup,
+  ...Object.values(manifest.icons ?? {}),
+  ...Object.values(manifest.action?.default_icon ?? {}),
   ...(manifest.content_scripts ?? []).flatMap((entry) => [
     ...(entry.js ?? []),
     ...(entry.css ?? [])

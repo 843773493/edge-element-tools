@@ -3,5 +3,13 @@ dist/
 coverage/
 .ai-backups/
 .edge-dev-profile/
+reference_repo/
 *.crx
 *.zip
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example

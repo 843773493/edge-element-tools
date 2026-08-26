@@ -1,8 +1,8 @@
 {
-  "name": "edge-element-tools",
-  "version": "0.1.0",
+  "name": "web-developer-tools",
+  "version": "0.1.2",
   "private": true,
-  "description": "A Microsoft Edge Manifest V3 extension for selecting elements and copying logs.",
+  "description": "A Microsoft Edge Manifest V3 extension for selecting elements and copying browser console logs.",
   "type": "module",
   "scripts": {
     "check": "npm run validate && npm run review && npm test",
@@ -10,6 +10,7 @@
     "review": "node tools/review.mjs",
     "test": "node tools/test.mjs",
     "e2e": "node tools/e2e.mjs",
+    "e2e:performance": "node tools/e2e-performance.mjs",
     "edge:dev": "node tools/edge-dev.mjs",
     "ai:modify": "node tools/ai-modify.mjs",
     "package": "node tools/package.mjs"

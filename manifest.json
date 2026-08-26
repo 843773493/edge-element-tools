@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Edge 元素工具 · 选择与日志",
-  "description": "在网页中选择元素、复制元素信息，并复制选择日志。",
-  "version": "0.1.0",
+  "name": "Web 开发者工具",
+  "short_name": "Web 开发者工具",
+  "description": "选择网页元素、复制 HTML 与完整上下文，并捕获网页控制台日志。",
+  "version": "0.1.2",
   "minimum_chrome_version": "111",
   "permissions": [
     "storage",
@@ -12,15 +13,35 @@
   "host_permissions": [
     "<all_urls>"
   ],
+  "icons": {
+    "16": "src/assets/icons/icon16.png",
+    "32": "src/assets/icons/icon32.png",
+    "48": "src/assets/icons/icon48.png",
+    "128": "src/assets/icons/icon128.png"
+  },
   "background": {
     "service_worker": "src/background/service-worker.js",
     "type": "module"
   },
   "action": {
-    "default_title": "元素选择与日志",
-    "default_popup": "src/popup/index.html"
+    "default_title": "Web 开发者工具",
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "src/assets/icons/icon16.png",
+      "32": "src/assets/icons/icon32.png"
+    }
   },
   "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "src/content/console-capture.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": [
         "<all_urls>"
