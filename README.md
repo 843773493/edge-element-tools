@@ -26,14 +26,18 @@ web-developer-tools/
 │  └─ popup/                     # 点击扩展图标后的 Popup
 ├─ tests/                        # Node 原生测试
 ├─ tools/
-│  ├─ ai-modify.mjs              # AI 变更计划执行器
+│  ├─ e2e.mjs                    # 隔离浏览器 E2E 入口
 │  ├─ check-manifest.mjs         # Manifest 与路径检查
 │  ├─ review.mjs                 # 静态安全/质量审查
 │  ├─ test.mjs                   # 测试入口
 │  └─ package.mjs                # 生成可分发 zip
-├─ ai/
-│  ├─ prompts/                   # 提供给 AI 的修改/审查提示词
-│  └─ changes/example.json       # 结构化修改计划示例
+├─ .agent/
+│  ├─ skills/                    # OpenSpec skills（Antigravity）
+│  └─ workflows/                 # /opsx-* 工作流入口
+├─ openspec/
+│  ├─ config.yaml                # 项目上下文和工作流规则
+│  ├─ specs/                     # 已实现能力的规范
+│  └─ changes/                   # 进行中的变更及归档记录
 └─ .github/workflows/ci.yml     # CI 自动校验
 ```
 
@@ -60,28 +64,32 @@ npm run package
 
 由于新版 Microsoft Edge 已移除用于命令行侧载扩展的相关开关，Playwright 官方扩展测试方案使用其自带 Chromium，而不是静默注入你当前的 Edge 用户配置。这样可以稳定实现后台安装和测试，同时保持日常 Edge 不受影响。
 
-## AI 自动化工作流
+## OpenSpec 工作流
 
-1. 先让 AI 根据 `ai/prompts/modify.md` 生成 `ai/changes/your-change.json`。
-2. 预览变更（默认不会写文件）：
+本项目已内置 OpenSpec 的 Antigravity 集成。首次使用前安装 OpenSpec CLI：
 
-   ```bash
-   npm run ai:modify -- --plan ai/changes/example.json
-   ```
+```bash
+npm install -g @fission-ai/openspec@latest
+openspec --version
+```
 
-3. 人工确认后应用：
+项目规范和变更记录保存在 `openspec/`；`.agent/` 保存 Antigravity 可识别的 skills 和 `/opsx-*` 工作流。一个典型变更按以下顺序进行：
 
-   ```bash
-   npm run ai:modify -- --plan ai/changes/example.json --apply
-   ```
+```text
+/opsx-explore <先澄清目标和方案>
+/opsx-propose <创建可审查的 proposal/specs/design/tasks>
+/opsx-apply <change-name>
+/opsx-sync <change-name>
+/opsx-archive <change-name>
+```
 
-4. 运行完整检查：
+`/opsx-explore` 和 `/opsx-propose` 只产生可审查的计划；确认后再用 `/opsx-apply` 修改代码。完成实现和验证后，用 `/opsx-sync` 更新主规范，再用 `/opsx-archive` 归档变更。具体命令也可以通过 `openspec --help` 查看。
 
-   ```bash
-   npm run check
-   ```
+每次变更仍应运行：
 
-变更计划只支持 `create`、`replace`、`append` 三种操作；路径必须位于模板目录中，`replace` 默认要求只命中一次，便于避免 AI 误改多个位置。
+```bash
+npm run check
+```
 
 审查工具会检查 Manifest 关键字段、危险 API、明显的调试代码和敏感权限。`<all_urls>` 在普通示例中是有意使用的，实际项目应尽量改成最小权限范围。
 

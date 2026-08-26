@@ -1,0 +1,27 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Microsoft Edge Manifest V3, vanilla JavaScript, Node.js 18+, and Playwright for isolated browser E2E tests.
+  Validation: Run npm run check for manifest validation, static review, and unit tests; run npm run e2e for browser interactions.
+  Performance: Run EDGE_PERF_SAMPLES=3 npm run e2e:performance when changing element selection or formatting paths.
+  Packaging: npm run package creates a distributable zip under dist/.
+  Conventions: Keep permissions and host matches minimal for real projects, preserve the background/content/popup boundaries, and update docs/privacy notes when behavior or data handling changes.
+  Privacy: Element HTML and Console output can contain sensitive data; never add external collection or remote code without an explicit design and privacy review.
+  Workflow: Use OpenSpec explore/propose/apply/sync/archive for implementation changes. Keep specs and change artifacts in openspec/.
+
+rules:
+  proposal:
+    - State the user-visible goal and explicit non-goals.
+    - Call out permission, privacy, browser-compatibility, and performance impact when applicable.
+  specs:
+    - Write requirements as testable behavior with concrete scenarios.
+  tasks:
+    - Include validation commands for every implementation task.
+
+operations:
+  apply:
+    guidance:
+      - Run the smallest relevant checks while implementing, then run npm run check before handoff.
+  archive:
+    guidance:
+      - Summarize the implementation and verification result before archiving.
