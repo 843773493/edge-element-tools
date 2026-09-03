@@ -21,5 +21,5 @@ test("Manifest 指向的入口文件存在", async () => {
   }
 
   assert.ok(manifest.permissions.includes("downloads"), "截图功能需要 downloads 权限");
-  assert.equal(manifest.commands?.["capture-and-edit-screenshot"]?.suggested_key?.default, "Ctrl+Shift+E");
+  assert.equal(manifest.commands?.["capture-and-edit-screenshot"]?.suggested_key?.default, "Ctrl+Shift+S");
 });
