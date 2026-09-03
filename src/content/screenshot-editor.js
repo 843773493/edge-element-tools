@@ -83,7 +83,18 @@
     context.save();
     context.fillStyle = "rgba(9, 24, 52, 0.48)";
     context.fillRect(0, 0, source.width, source.height);
-    context.clearRect(selection.x, selection.y, selection.width, selection.height);
+    // 只让选区避开遮罩并保留原图，不能 clearRect，否则透明画布底色会显示成白块。
+    context.drawImage(
+      source,
+      selection.x,
+      selection.y,
+      selection.width,
+      selection.height,
+      selection.x,
+      selection.y,
+      selection.width,
+      selection.height
+    );
     context.strokeStyle = "#2f6fed";
     context.lineWidth = Math.max(2, source.width / 700);
     context.strokeRect(selection.x, selection.y, selection.width, selection.height);

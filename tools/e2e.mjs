@@ -143,10 +143,19 @@ try {
   assert.ok(hoverPixel[0] > 150 && hoverPixel[1] < 100, `截图没有保留悬停图标像素：${hoverPixel}`);
   const canvasBox = await canvas.boundingBox();
   assert.ok(canvasBox, "截图画布不可交互");
+  const selectionProbeBefore = await canvas.evaluate((canvas) => {
+    const context = canvas.getContext("2d");
+    return Array.from(context.getImageData(100, 100, 1, 1).data);
+  });
   await page.mouse.move(canvasBox.x + 20, canvasBox.y + 20);
   await page.mouse.down();
   await page.mouse.move(canvasBox.x + Math.min(220, canvasBox.width - 20), canvasBox.y + Math.min(160, canvasBox.height - 20));
   await page.mouse.up();
+  const selectionProbeAfter = await canvas.evaluate((canvas) => {
+    const context = canvas.getContext("2d");
+    return Array.from(context.getImageData(100, 100, 1, 1).data);
+  });
+  assert.deepEqual(selectionProbeAfter, selectionProbeBefore, `截图选区没有保留原图像素：${selectionProbeBefore} -> ${selectionProbeAfter}`);
   await editor.locator("#apply-crop").click();
   await page.waitForFunction(() => document.querySelector("#edge-element-tools-screenshot-editor")?.shadowRoot?.querySelector("#status")?.textContent.includes("已裁剪"));
   const croppedCanvasSize = await canvas.evaluate((canvas) => ({
