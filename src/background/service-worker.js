@@ -46,6 +46,19 @@ function activateTab(tabId) {
   });
 }
 
+function sendToTab(tabId, message) {
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(tabId, message, (response) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+      resolve(response);
+    });
+  });
+}
+
 function captureVisibleTab(windowId) {
   return new Promise((resolve, reject) => {
     chrome.tabs.captureVisibleTab(windowId, { format: "png" }, (dataUrl) => {
@@ -122,20 +135,6 @@ function storageRemove(keys) {
   });
 }
 
-function createEditorTab(captureId) {
-  const editorUrl = `${chrome.runtime.getURL("src/screenshot/index.html")}?captureId=${encodeURIComponent(captureId)}`;
-  return new Promise((resolve, reject) => {
-    chrome.tabs.create({ url: editorUrl, active: true }, (tab) => {
-      const error = chrome.runtime.lastError;
-      if (error) {
-        reject(new Error(error.message));
-        return;
-      }
-      resolve(tab);
-    });
-  });
-}
-
 async function captureScreenshotForEditor(tab) {
   const restrictionMessage = getPageRestrictionMessage(tab?.url);
   if (restrictionMessage) {
@@ -160,8 +159,14 @@ async function captureScreenshotForEditor(tab) {
     }
   });
   try {
-    const editorTab = await createEditorTab(captureId);
-    return { captureId, editorTabId: editorTab.id };
+    const editorResponse = await sendToTab(tab.id, {
+      type: "OPEN_SCREENSHOT_EDITOR",
+      captureId
+    });
+    if (!editorResponse?.ok) {
+      throw new Error(editorResponse?.error || "无法打开截图编辑器");
+    }
+    return { captureId, tabId: tab.id };
   } catch (error) {
     await storageRemove(SCREENSHOT_CAPTURE_KEY).catch(() => {});
     throw error;
@@ -290,11 +295,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     getTab(tabId)
       .then((tab) => runScreenshotOnce(tab))
-      .then(({ captureId, editorTabId }) => {
+      .then(({ captureId, tabId: resultTabId }) => {
         sendResponse({
           ok: true,
           captureId,
-          editorTabId
+          tabId: resultTabId
         });
       })
       .catch((error) => {

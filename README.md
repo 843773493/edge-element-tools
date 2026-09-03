@@ -5,7 +5,7 @@
 - “选择元素”：在当前网页中选择一个元素，把清理后的 Outer HTML 复制到剪贴板。
 - “选择元素+”：选择一个元素，把完整元素上下文复制到剪贴板。
 - “复制控制台日志”：把当前网页捕获到的 Console 输出复制到剪贴板，最多保留 200 条。
-- “截图并编辑”：快捷键触发后立即截取当前可视区域，再打开独立截图编辑器调整裁剪区域并下载 PNG；默认快捷键是 `Ctrl+Shift+E`，可在 `edge://extensions/shortcuts` 修改。
+- “截图并编辑”：快捷键触发后立即截取当前可视区域，再在原页面上打开截图编辑浮层调整裁剪区域并下载 PNG；默认快捷键是 `Ctrl+Shift+E`，可在 `edge://extensions/shortcuts` 修改。
 
 选择过程中使用元素自身的 `outline` 高亮，不创建固定底部栏或额外的页面面板；按 `Esc` 可以取消选择。截图会在打开编辑器前直接捕获原网页画面，编辑器只操作静态截图，因此不会破坏鼠标悬停图标、临时气泡等状态。
 
@@ -24,7 +24,7 @@ web-developer-tools/
 │  ├─ content/console-capture.js # 网页 Console 捕获
 │  ├─ content/content.js         # 元素选择、高亮和剪贴板逻辑
 │  ├─ content/content.css        # 选择状态下的鼠标样式
-│  ├─ screenshot/                 # 静态截图裁剪编辑器
+│  ├─ content/screenshot-editor.js # 页内静态截图裁剪编辑器
 │  └─ popup/                     # 点击扩展图标后的 Popup
 ├─ tests/                        # Node 原生测试
 ├─ tools/
@@ -104,7 +104,7 @@ npm run check
 - 在 rich 模式下再次点击另一个元素，确认仍保持选择状态并复制新的完整上下文。
 - 让测试页输出几条 Console 消息，点击“复制控制台日志”，检查剪贴板包含网页 Console 内容且不包含元素选择事件。
 - 按 `Esc` 取消选择，确认网页不会留下固定底部栏或额外的选择面板。
-- 让网页显示悬停提示或临时气泡，按 `Ctrl+Shift+E`，确认先打开静态截图编辑器，再拖拽裁剪并下载 PNG；检查截图中悬停图标或临时气泡仍然存在。
+- 让网页显示悬停提示或临时气泡，按 `Ctrl+Shift+E`，确认原页面不跳转、页内出现编辑浮层，再拖拽裁剪并下载 PNG；检查截图中悬停图标或临时气泡仍然存在。
 - 打开 `edge://extensions` 的 Service worker 检查报错。
 - 执行 `npm run check`，确认验证、审查和测试全部通过。
 - 执行 `npm run e2e`，确认隔离浏览器中的真实交互路径通过。

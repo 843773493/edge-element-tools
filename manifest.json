@@ -3,7 +3,7 @@
   "name": "Web 开发者工具",
   "short_name": "Web 开发者工具",
   "description": "选择网页元素、复制 HTML 与完整上下文，并捕获网页控制台日志。",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "minimum_chrome_version": "111",
   "permissions": [
     "storage",
@@ -56,7 +56,8 @@
         "<all_urls>"
       ],
       "js": [
-        "src/content/content.js"
+        "src/content/content.js",
+        "src/content/screenshot-editor.js"
       ],
       "css": [
         "src/content/content.css"

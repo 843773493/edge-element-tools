@@ -120,18 +120,20 @@ try {
   const hoverIconBox = await page.locator("#hover-icon").boundingBox();
   assert.ok(hoverIconBox, "悬停图标没有显示");
   const screenshotPopup = await openPopup(context, extensionId, fixtureUrl);
-  const editorPagePromise = context.waitForEvent("page");
   await screenshotPopup.locator("#capture-screenshot").click();
-  const editorPage = await editorPagePromise;
-  await editorPage.locator("#status").waitFor();
-  await editorPage.waitForFunction(() => document.querySelector("#status")?.textContent.includes("截图已加载"));
-  const originalCanvasSize = await editorPage.locator("#screenshot-canvas").evaluate((canvas) => ({
+  await screenshotPopup.close();
+  const editor = page.locator("#edge-element-tools-screenshot-editor");
+  await editor.waitFor();
+  const status = editor.locator("#status");
+  await status.waitFor();
+  await page.waitForFunction(() => document.querySelector("#edge-element-tools-screenshot-editor")?.shadowRoot?.querySelector("#status")?.textContent.includes("截图已加载"));
+  const canvas = editor.locator("#screenshot-canvas");
+  const originalCanvasSize = await canvas.evaluate((canvas) => ({
     width: canvas.width,
     height: canvas.height
   }));
   assert.ok(originalCanvasSize.width > 0 && originalCanvasSize.height > 0, "截图画布没有图像");
-  const hoverPixel = await editorPage.evaluate(({ x, y }) => {
-    const canvas = document.querySelector("#screenshot-canvas");
+  const hoverPixel = await canvas.evaluate((canvas, { x, y }) => {
     const context = canvas.getContext("2d");
     return Array.from(context.getImageData(Math.round(x), Math.round(y), 1, 1).data);
   }, {
@@ -139,26 +141,26 @@ try {
     y: hoverIconBox.y + hoverIconBox.height / 2
   });
   assert.ok(hoverPixel[0] > 150 && hoverPixel[1] < 100, `截图没有保留悬停图标像素：${hoverPixel}`);
-  const canvasBox = await editorPage.locator("#screenshot-canvas").boundingBox();
+  const canvasBox = await canvas.boundingBox();
   assert.ok(canvasBox, "截图画布不可交互");
-  await editorPage.mouse.move(canvasBox.x + 20, canvasBox.y + 20);
-  await editorPage.mouse.down();
-  await editorPage.mouse.move(canvasBox.x + Math.min(220, canvasBox.width - 20), canvasBox.y + Math.min(160, canvasBox.height - 20));
-  await editorPage.mouse.up();
-  await editorPage.locator("#apply-crop").click();
-  await editorPage.waitForFunction(() => document.querySelector("#status")?.textContent.includes("已裁剪"));
-  const croppedCanvasSize = await editorPage.locator("#screenshot-canvas").evaluate((canvas) => ({
+  await page.mouse.move(canvasBox.x + 20, canvasBox.y + 20);
+  await page.mouse.down();
+  await page.mouse.move(canvasBox.x + Math.min(220, canvasBox.width - 20), canvasBox.y + Math.min(160, canvasBox.height - 20));
+  await page.mouse.up();
+  await editor.locator("#apply-crop").click();
+  await page.waitForFunction(() => document.querySelector("#edge-element-tools-screenshot-editor")?.shadowRoot?.querySelector("#status")?.textContent.includes("已裁剪"));
+  const croppedCanvasSize = await canvas.evaluate((canvas) => ({
     width: canvas.width,
     height: canvas.height
   }));
   assert.ok(croppedCanvasSize.width < originalCanvasSize.width, "裁剪没有改变截图宽度");
-  await editorPage.locator("#download").click();
-  await editorPage.waitForFunction(() => document.querySelector("#status")?.textContent.includes("已保存到下载目录"));
-  const downloadId = Number(await editorPage.locator("#status").getAttribute("data-download-id"));
+  await editor.locator("#download").click();
+  await page.waitForFunction(() => document.querySelector("#edge-element-tools-screenshot-editor")?.shadowRoot?.querySelector("#status")?.textContent.includes("已保存到下载目录"));
+  const downloadId = Number(await status.getAttribute("data-download-id"));
   assert.ok(Number.isInteger(downloadId) && downloadId > 0, "截图没有返回下载 ID");
   const download = await waitForDownload(serviceWorker, downloadId);
-  await screenshotPopup.close();
-  await editorPage.close();
+  await editor.locator("#close").click();
+  await page.waitForFunction(() => !document.querySelector("#edge-element-tools-screenshot-editor"));
   const screenshotPath = download.filename;
   const screenshotBytes = await fs.readFile(screenshotPath);
   assert.equal(screenshotBytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");

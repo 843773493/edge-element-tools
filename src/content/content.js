@@ -630,6 +630,10 @@
   }
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === "OPEN_SCREENSHOT_EDITOR") {
+      stopPicker();
+      return false;
+    }
     if (message?.type !== "START_PICK") {
       return false;
     }

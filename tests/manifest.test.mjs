@@ -11,9 +11,6 @@ test("Manifest 指向的入口文件存在", async () => {
   const referencedFiles = [
     manifest.background.service_worker,
     manifest.action.default_popup,
-    "src/screenshot/index.html",
-    "src/screenshot/editor.js",
-    "src/screenshot/editor.css",
     ...Object.values(manifest.icons ?? {}),
     ...Object.values(manifest.action.default_icon ?? {}),
     ...manifest.content_scripts.flatMap((entry) => [...entry.js, ...(entry.css ?? [])])

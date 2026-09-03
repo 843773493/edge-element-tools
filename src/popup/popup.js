@@ -84,6 +84,13 @@ function getConnectionErrorMessage(error) {
   return `无法开始选择：${error.message}`;
 }
 
+function getScreenshotErrorMessage(error) {
+  if (/message port closed|Receiving end does not exist|Could not establish connection/i.test(error.message)) {
+    return "扩展刚刚更新，请先在 edge://extensions 点击“重新加载”，再刷新当前网页后重试。";
+  }
+  return `截图失败：${error.message}`;
+}
+
 async function startPicker(mode) {
   setBusy(true, "选择中");
   setMessage("请在当前网页中点击目标元素。按 Esc 可取消。 ");
@@ -181,7 +188,7 @@ async function captureScreenshot() {
     setMessage("截图已打开编辑器；原网页画面已经截取完成，可以安全调整区域。");
   } catch (error) {
     setBusy(false, "不可用", true);
-    setMessage(`截图失败：${error.message}`, "error");
+    setMessage(getScreenshotErrorMessage(error), "error");
   }
 }
 
