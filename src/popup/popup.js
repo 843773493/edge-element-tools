@@ -2,6 +2,7 @@ const elements = {
   pick: document.querySelector("#pick"),
   pickRich: document.querySelector("#pick-rich"),
   copyLog: document.querySelector("#copy-log"),
+  captureScreenshot: document.querySelector("#capture-screenshot"),
   logCount: document.querySelector("#log-count"),
   message: document.querySelector("#message"),
   status: document.querySelector("#status")
@@ -13,7 +14,7 @@ function setMessage(message, kind = "") {
 }
 
 function setBusy(isBusy, status = "就绪", unavailable = false) {
-  for (const button of [elements.pick, elements.pickRich, elements.copyLog]) {
+  for (const button of [elements.pick, elements.pickRich, elements.copyLog, elements.captureScreenshot]) {
     button.disabled = isBusy;
   }
   elements.status.textContent = status;
@@ -155,6 +156,35 @@ async function copyLog() {
   }
 }
 
+async function captureScreenshot() {
+  setBusy(true, "截图中");
+  setMessage("正在立即截取当前网页并打开编辑器…");
+
+  try {
+    const tab = await queryActiveTab();
+    if (!tab?.id) {
+      throw new Error("找不到当前网页");
+    }
+
+    const restrictionMessage = getPageRestrictionMessage(tab.url);
+    if (restrictionMessage) {
+      setBusy(false, "仅支持网页", true);
+      setMessage(restrictionMessage, "error");
+      return;
+    }
+
+    const response = await sendToRuntime({ type: "CAPTURE_SCREENSHOT", tabId: tab.id });
+    if (!response?.ok) {
+      throw new Error(response?.error || "截图没有响应");
+    }
+    setBusy(false, "编辑中");
+    setMessage("截图已打开编辑器；原网页画面已经截取完成，可以安全调整区域。");
+  } catch (error) {
+    setBusy(false, "不可用", true);
+    setMessage(`截图失败：${error.message}`, "error");
+  }
+}
+
 function formatConsoleLogs(logs) {
   return logs.map((log) => {
     const timestamp = log.occurred_at || "未知时间";
@@ -185,6 +215,7 @@ async function refreshLogCount() {
 elements.pick.addEventListener("click", () => startPicker("basic"));
 elements.pickRich.addEventListener("click", () => startPicker("rich"));
 elements.copyLog.addEventListener("click", copyLog);
+elements.captureScreenshot.addEventListener("click", captureScreenshot);
 
 chrome.storage.onChanged.addListener((changes, areaName) => {
   if ((areaName === "session" || areaName === "local") && changes.consoleLogsByTab) {

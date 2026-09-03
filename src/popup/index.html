@@ -45,13 +45,22 @@
           </span>
           <span class="action-arrow" aria-hidden="true">›</span>
         </button>
+
+        <button id="capture-screenshot" class="action" type="button">
+          <span class="action-icon" aria-hidden="true">▣</span>
+          <span class="action-copy">
+            <strong>截图并编辑</strong>
+            <small>快捷键 Ctrl+Shift+E，先截取再调整区域</small>
+          </span>
+          <span class="action-arrow" aria-hidden="true">›</span>
+        </button>
       </section>
 
       <div class="log-summary">
         <span>控制台消息</span>
         <output id="log-count">0 条</output>
       </div>
-      <p id="message" class="message" role="status">选择完成后，元素 HTML 会自动复制。</p>
+      <p id="message" class="message" role="status">选择完成后，元素 HTML 会自动复制；截图后可在编辑器中调整区域。</p>
     </main>
     <script type="module" src="popup.js"></script>
   </body>

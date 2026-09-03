@@ -3,12 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <title>Element Tools E2E Fixture</title>
+    <style>
+      #fixture-hover {
+        position: relative;
+        display: inline-block;
+        margin-top: 24px;
+        padding: 12px 16px;
+        border: 1px solid #64748b;
+      }
+
+      #fixture-hover .hover-icon {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgb(220, 38, 38);
+        opacity: 0;
+      }
+
+      #fixture-hover:hover .hover-icon {
+        opacity: 1;
+      }
+    </style>
   </head>
   <body>
     <main>
       <h1 id="fixture-heading">Extension interaction fixture</h1>
       <p id="fixture-status">The page is ready for the extension.</p>
       <button id="fixture-button" type="button">Sample page action</button>
+      <div id="fixture-hover">Hover target<span id="hover-icon" class="hover-icon" aria-hidden="true"></span></div>
     </main>
   </body>
 </html>

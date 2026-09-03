@@ -11,6 +11,9 @@ test("Manifest 指向的入口文件存在", async () => {
   const referencedFiles = [
     manifest.background.service_worker,
     manifest.action.default_popup,
+    "src/screenshot/index.html",
+    "src/screenshot/editor.js",
+    "src/screenshot/editor.css",
     ...Object.values(manifest.icons ?? {}),
     ...Object.values(manifest.action.default_icon ?? {}),
     ...manifest.content_scripts.flatMap((entry) => [...entry.js, ...(entry.css ?? [])])
@@ -19,4 +22,7 @@ test("Manifest 指向的入口文件存在", async () => {
   for (const relativePath of referencedFiles) {
     await assert.doesNotReject(fs.access(path.join(root, relativePath)));
   }
+
+  assert.ok(manifest.permissions.includes("downloads"), "截图功能需要 downloads 权限");
+  assert.equal(manifest.commands?.["capture-and-edit-screenshot"]?.suggested_key?.default, "Ctrl+Shift+E");
 });

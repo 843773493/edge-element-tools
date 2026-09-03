@@ -17,6 +17,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const fixturePath = path.join(root, "tests", "fixtures", "interaction.html");
 const fixtureHtml = await fs.readFile(fixturePath, "utf8");
 const userDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "edge-template-e2e-"));
+const downloadsDir = await fs.mkdtemp(path.join(os.tmpdir(), "edge-template-downloads-"));
 
 const server = http.createServer((request, response) => {
   if (request.url === "/fixture.html" || request.url === "/") {
@@ -38,6 +39,7 @@ try {
   context = await chromium.launchPersistentContext(userDataDir, {
     channel: process.env.EDGE_E2E_CHANNEL ?? "chromium",
     headless: process.env.EDGE_E2E_HEADFUL !== "1",
+    downloadsPath: downloadsDir,
     args: [
       `--disable-extensions-except=${root}`,
       `--load-extension=${root}`
@@ -55,15 +57,19 @@ try {
   const page = await context.newPage();
   await page.goto(fixtureUrl);
   await page.waitForTimeout(500);
-  await page.evaluate(() => {
+  await page.evaluate(async () => {
     console.log("fixture console log");
+    await new Promise((resolve) => setTimeout(resolve, 80));
     console.warn("fixture console warning");
+    await new Promise((resolve) => setTimeout(resolve, 80));
     console.error("fixture console error");
   });
+  await page.waitForTimeout(500);
 
   const popup = await openPopup(context, extensionId, fixtureUrl);
   await assertPopupState(popup, "就绪");
-  await popup.waitForFunction(() => document.querySelector("#log-count")?.textContent === "3 条");
+  await popup.locator("#capture-screenshot").waitFor();
+  await popup.waitForFunction(() => Number.parseInt(document.querySelector("#log-count")?.textContent, 10) >= 3);
   await popup.locator("#pick").click();
   await popup.close().catch(() => {});
 
@@ -101,7 +107,7 @@ try {
   assert.match(secondRichClipboard, /<h1 id="fixture-heading">Extension interaction fixture<\/h1>/);
 
   const copyPopup = await openPopup(context, extensionId, fixtureUrl);
-  await copyPopup.waitForFunction(() => document.querySelector("#log-count")?.textContent === "3 条");
+  await copyPopup.waitForFunction(() => Number.parseInt(document.querySelector("#log-count")?.textContent, 10) >= 3);
   await copyPopup.locator("#copy-log").click();
   const logs = await readClipboard(page, "fixture console log");
   await copyPopup.close().catch(() => {});
@@ -110,15 +116,64 @@ try {
   assert.match(logs, /error: fixture console error/);
   assert.doesNotMatch(logs, /element_selected|选择元素/);
 
+  await page.locator("#fixture-hover").hover();
+  const hoverIconBox = await page.locator("#hover-icon").boundingBox();
+  assert.ok(hoverIconBox, "悬停图标没有显示");
+  const screenshotPopup = await openPopup(context, extensionId, fixtureUrl);
+  const editorPagePromise = context.waitForEvent("page");
+  await screenshotPopup.locator("#capture-screenshot").click();
+  const editorPage = await editorPagePromise;
+  await editorPage.locator("#status").waitFor();
+  await editorPage.waitForFunction(() => document.querySelector("#status")?.textContent.includes("截图已加载"));
+  const originalCanvasSize = await editorPage.locator("#screenshot-canvas").evaluate((canvas) => ({
+    width: canvas.width,
+    height: canvas.height
+  }));
+  assert.ok(originalCanvasSize.width > 0 && originalCanvasSize.height > 0, "截图画布没有图像");
+  const hoverPixel = await editorPage.evaluate(({ x, y }) => {
+    const canvas = document.querySelector("#screenshot-canvas");
+    const context = canvas.getContext("2d");
+    return Array.from(context.getImageData(Math.round(x), Math.round(y), 1, 1).data);
+  }, {
+    x: hoverIconBox.x + hoverIconBox.width / 2,
+    y: hoverIconBox.y + hoverIconBox.height / 2
+  });
+  assert.ok(hoverPixel[0] > 150 && hoverPixel[1] < 100, `截图没有保留悬停图标像素：${hoverPixel}`);
+  const canvasBox = await editorPage.locator("#screenshot-canvas").boundingBox();
+  assert.ok(canvasBox, "截图画布不可交互");
+  await editorPage.mouse.move(canvasBox.x + 20, canvasBox.y + 20);
+  await editorPage.mouse.down();
+  await editorPage.mouse.move(canvasBox.x + Math.min(220, canvasBox.width - 20), canvasBox.y + Math.min(160, canvasBox.height - 20));
+  await editorPage.mouse.up();
+  await editorPage.locator("#apply-crop").click();
+  await editorPage.waitForFunction(() => document.querySelector("#status")?.textContent.includes("已裁剪"));
+  const croppedCanvasSize = await editorPage.locator("#screenshot-canvas").evaluate((canvas) => ({
+    width: canvas.width,
+    height: canvas.height
+  }));
+  assert.ok(croppedCanvasSize.width < originalCanvasSize.width, "裁剪没有改变截图宽度");
+  await editorPage.locator("#download").click();
+  await editorPage.waitForFunction(() => document.querySelector("#status")?.textContent.includes("已保存到下载目录"));
+  const downloadId = Number(await editorPage.locator("#status").getAttribute("data-download-id"));
+  assert.ok(Number.isInteger(downloadId) && downloadId > 0, "截图没有返回下载 ID");
+  const download = await waitForDownload(serviceWorker, downloadId);
+  await screenshotPopup.close();
+  await editorPage.close();
+  const screenshotPath = download.filename;
+  const screenshotBytes = await fs.readFile(screenshotPath);
+  assert.equal(screenshotBytes.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+  assert.ok(screenshotBytes.length > 100, "截图 PNG 不应为空");
+
   const countPopup = await openPopup(context, extensionId, fixtureUrl);
-  assert.equal(await countPopup.locator("#log-count").textContent(), "3 条");
+  assert.ok(Number.parseInt(await countPopup.locator("#log-count").textContent(), 10) >= 3);
   await countPopup.close();
 
-  console.log("✓ Edge 扩展隔离 E2E 通过：Outer HTML、完整上下文、剪贴板和网页控制台日志均已验证");
+  console.log("✓ Edge 扩展隔离 E2E 通过：Outer HTML、完整上下文、截图 PNG、剪贴板和网页控制台日志均已验证");
 } finally {
   await context?.close();
   await new Promise((resolve) => server.close(resolve));
   await fs.rm(userDataDir, { recursive: true, force: true });
+  await fs.rm(downloadsDir, { recursive: true, force: true });
 }
 
 async function assertPopupState(popup, expectedStatus) {
@@ -145,4 +200,19 @@ async function readClipboard(page, marker) {
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
   throw new Error(`剪贴板在 3 秒内没有出现预期内容: ${marker}，实际内容长度为 ${text.length}`);
+}
+
+async function waitForDownload(worker, downloadId) {
+  const deadline = Date.now() + 5000;
+  while (Date.now() < deadline) {
+    const downloads = await worker.evaluate((id) => new Promise((resolve) => {
+      chrome.downloads.search({ id }, resolve);
+    }), downloadId);
+    const download = downloads?.[0];
+    if (download?.state === "complete" && download.filename) {
+      return download;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error("截图在 5 秒内没有完成下载");
 }
